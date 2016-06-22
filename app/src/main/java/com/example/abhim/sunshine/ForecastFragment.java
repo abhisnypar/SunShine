@@ -83,7 +83,7 @@ public  class ForecastFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh){
             FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
-            fetchWeatherTask.execute("Chicago");
+            fetchWeatherTask.execute("60007");
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -131,9 +131,9 @@ public  class ForecastFragment extends Fragment {
             final String OWM_LIST = "list";
             final String OWM_WEATHER = "weather";
             final String OWM_temperature = "temp";
-            final String OWM_MAX = "temp_max";
-            final String OWM_MIN = "temp_min";
-            final String OWM_DESCRIPTION = "description";
+            final String OWM_MAX = "max";
+            final String OWM_MIN = "min";
+            final String OWM_DESCRIPTION = "main";
 
             JSONObject forecastJson = new JSONObject(forecastJsonStr);
             JSONArray weatherArray = new JSONArray();
@@ -226,7 +226,7 @@ public  class ForecastFragment extends Fragment {
                 // http: //openWeatherMap.org/API#forecast
 
                 final String FORECAST_BASE_URL =
-                        "http://api.openweathermap.org/data/2.5/forecast/city?";
+                        "http://api.openweathermap.org/data/2.5/forecast/daily?";
                 final String QUERY_PARAM = "q";
                 final String FORMAT_PARAM = "mode";
                 final String UNITS_PARAM = "units";
