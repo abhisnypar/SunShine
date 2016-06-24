@@ -13,8 +13,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,7 +34,7 @@ import java.util.ArrayList;
 /**
  * Created by abhim on 6/17/2016.
  */
-public  class ForecastFragment extends Fragment {
+public class ForecastFragment extends Fragment {
 
 
     public ArrayAdapter<String> mForecastAdapter;
@@ -63,13 +65,20 @@ public  class ForecastFragment extends Fragment {
         list_items.add("Sat-Sunny-76/68");
         mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textView, list_items);
         forecast_items.setAdapter(mForecastAdapter);
+        forecast_items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String forCastText = mForecastAdapter.getItem(position);
+                Toast.makeText(getContext(), "This is the toast message" + forCastText, Toast.LENGTH_LONG).show();
+            }
+        });
 
         return rootView;
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.forecastffragment,menu);
+        inflater.inflate(R.menu.forecastffragment, menu);
     }
 
     @Override
@@ -81,7 +90,7 @@ public  class ForecastFragment extends Fragment {
         as you specify a parent activity in AndroidManifest.xml
          */
         int id = item.getItemId();
-        if (id == R.id.action_refresh){
+        if (id == R.id.action_refresh) {
             FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
             fetchWeatherTask.execute("60007");
             return true;
@@ -97,7 +106,7 @@ public  class ForecastFragment extends Fragment {
         *  so for convenience we're breaking it out into its own method now.
         */
 
-        private String getReadableDataString(long time){
+        private String getReadableDataString(long time) {
             //Because the API returns unique timestamp
             //it must be converted to milliseconds in order to be converted to valid date.
 
@@ -108,24 +117,24 @@ public  class ForecastFragment extends Fragment {
         /**
          * Prepare the weather highs/lows for presentation
          */
-        private String formatHighLows(double high,double low){
+        private String formatHighLows(double high, double low) {
             //For presentation, the user doesn't care about tenths of a degree
             long roundHigh = Math.round(high);
             long roundLow = Math.round(low);
 
-            String highLowStr = roundHigh+"/"+roundLow;
+            String highLowStr = roundHigh + "/" + roundLow;
             return highLowStr;
         }
 
         /**
          * Take the String representing the complete forecast in JSON format and
          * pull out the data we need to construct the strings needed for the wireframes.
-         *
+         * <p/>
          * Fortunately parsing is easy: constructor takes the JSON string and convert it
          * in to an object hierarchy for us.
          */
 
-        private String[] getWeatherDataFromJSon(String forecastJsonStr,int numDays)throws JSONException{
+        private String[] getWeatherDataFromJSon(String forecastJsonStr, int numDays) throws JSONException {
 
             //These are the Names of the JSON objects that need to be extracted.
             final String OWM_LIST = "list";
@@ -137,7 +146,7 @@ public  class ForecastFragment extends Fragment {
 
             JSONObject forecastJson = new JSONObject(forecastJsonStr);
             JSONArray weatherArray = new JSONArray();
-                    weatherArray = forecastJson.getJSONArray(OWM_LIST);
+            weatherArray = forecastJson.getJSONArray(OWM_LIST);
 
 
             //OWM returns daily forecasts based upon the local time of the city that is being
@@ -152,13 +161,13 @@ public  class ForecastFragment extends Fragment {
             daytime.setToNow();
 
             //We start at the day returned by local time. Otherwise this is mess.
-            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(),daytime.gmtoff);
+            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), daytime.gmtoff);
 
             //now we work exclusively in UTC.
             daytime = new Time();
 
             String[] resultStrns = new String[numDays];
-            for (int i=0;i<weatherArray.length();i++){
+            for (int i = 0; i < weatherArray.length(); i++) {
                 //For now, using the format "Day,Description, hi/low
                 String day;
                 String description;
@@ -172,7 +181,7 @@ public  class ForecastFragment extends Fragment {
                 //"this saturday"
                 long dateTime;
                 //cheating to convert this to UTC time, which is what we want anyhow
-                dateTime = daytime.setJulianDay(julianStartDay+i);
+                dateTime = daytime.setJulianDay(julianStartDay + i);
                 day = getReadableDataString(dateTime);
 
                 //description is in a child array called "weather", which is 1 element long.
@@ -186,16 +195,15 @@ public  class ForecastFragment extends Fragment {
                 double high = temperatureObject.getDouble(OWM_MAX);
                 double low = temperatureObject.getDouble(OWM_MIN);
 
-                highAndLow = formatHighLows(high,low);
-                resultStrns[i] = day+"-"+description+"-"+highAndLow;
+                highAndLow = formatHighLows(high, low);
+                resultStrns[i] = day + "-" + description + "-" + highAndLow;
 
             }
-            for (String s : resultStrns){
-                Log.v(LOG_TAG,"Forecast entry: " +s);
+            for (String s : resultStrns) {
+                Log.v(LOG_TAG, "Forecast entry: " + s);
             }
             return resultStrns;
         }
-
 
 
         @Override
@@ -203,7 +211,7 @@ public  class ForecastFragment extends Fragment {
 
             //If there's no zip code, there's nothing to look up. Verify the size of params.
 
-            if (params.length == 0){
+            if (params.length == 0) {
                 //do nothing
                 return null;
             }
@@ -235,15 +243,15 @@ public  class ForecastFragment extends Fragment {
 
 
                 Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                        .appendQueryParameter(QUERY_PARAM,params[0])
-                        .appendQueryParameter(FORMAT_PARAM,format)
-                        .appendQueryParameter(UNITS_PARAM,units)
-                        .appendQueryParameter(DAYS_PARAM,Integer.toString(numDays))
-                        .appendQueryParameter(APPID_PARAM,BuildConfig.OPEN_WEATHER_MAP_API_KEY)
+                        .appendQueryParameter(QUERY_PARAM, params[0])
+                        .appendQueryParameter(FORMAT_PARAM, format)
+                        .appendQueryParameter(UNITS_PARAM, units)
+                        .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
+                        .appendQueryParameter(APPID_PARAM, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
                         .build();
 
                 URL url = new URL(builtUri.toString());
-                Log.v(LOG_TAG,"Built_URL"+builtUri.toString());
+                Log.v(LOG_TAG, "Built_URL" + builtUri.toString());
                 // Create the request to openWeatherMAp, and open the connection
 
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -290,14 +298,14 @@ public  class ForecastFragment extends Fragment {
                     try {
                         reader.close();
                     } catch (final IOException e) {
-                        Log.e(LOG_TAG,"Error closing stream",e);
+                        Log.e(LOG_TAG, "Error closing stream", e);
                     }
                 }
             }
             try {
-                return getWeatherDataFromJSon(forecastJsonStr,numDays);
+                return getWeatherDataFromJSon(forecastJsonStr, numDays);
             } catch (JSONException e) {
-                Log.e(LOG_TAG,e.getMessage(),e);
+                Log.e(LOG_TAG, e.getMessage(), e);
                 e.printStackTrace();
             }
 
@@ -307,9 +315,9 @@ public  class ForecastFragment extends Fragment {
 
         @Override
         protected void onPostExecute(String[] result) {
-            if (result != null){
+            if (result != null) {
                 mForecastAdapter.clear();
-                for (String dayForecastStr : result){
+                for (String dayForecastStr : result) {
                     mForecastAdapter.add(dayForecastStr);
                 }
                 // New data is back from the server. Hooray!
