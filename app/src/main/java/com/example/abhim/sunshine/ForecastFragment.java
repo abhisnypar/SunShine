@@ -1,8 +1,11 @@
 package com.example.abhim.sunshine;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
@@ -16,7 +19,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,19 +59,15 @@ public class ForecastFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         forecast_items = (ListView) rootView.findViewById(R.id.list_view_forecast);
         ArrayList<String> list_items = new ArrayList<String>();
-        list_items.add("Mon 6/23 - Sunny - 31/17");
-        list_items.add("Tomorrow-Foggy-70/46");
-        list_items.add("Weds-Cloudy-72/63");
-        list_items.add("Thurs-Rainy-64/51");
-        list_items.add("Fri-Foggy-70/46");
-        list_items.add("Sat-Sunny-76/68");
         mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textView, list_items);
         forecast_items.setAdapter(mForecastAdapter);
         forecast_items.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String forCastText = mForecastAdapter.getItem(position);
-                Toast.makeText(getContext(), "This is the toast message" + forCastText, Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, forCastText);
+                startActivity(intent);
             }
         });
 
@@ -82,6 +80,19 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        onWeatherUpdate();
+    }
+
+    private void onWeatherUpdate() {
+        FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String location = prefs.getString(getString(R.string.pref_location_key),getString(R.string.pref_location_default));
+        fetchWeatherTask.execute(location);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         /*
@@ -91,8 +102,12 @@ public class ForecastFragment extends Fragment {
          */
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            FetchWeatherTask fetchWeatherTask = new FetchWeatherTask();
-            fetchWeatherTask.execute("60007");
+            onWeatherUpdate();
+            return true;
+        }
+        if (id == R.id.action_settings) {
+            Intent intent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -117,8 +132,14 @@ public class ForecastFragment extends Fragment {
         /**
          * Prepare the weather highs/lows for presentation
          */
-        private String formatHighLows(double high, double low) {
-            //For presentation, the user doesn't care about tenths of a degree
+        private String formatHighLows(double high, double low,String unitType) {
+
+            if (unitType.equals(R.string.pref_units_imperial)){
+                high = (high*1.8)+32;
+                low = (low*1.8)+32;
+            }else if (!unitType.equals(R.string.pref_units_metric)){
+                Log.e(LOG_TAG,"Unit type not found :"+unitType);
+            }
             long roundHigh = Math.round(high);
             long roundLow = Math.round(low);
 
@@ -167,6 +188,15 @@ public class ForecastFragment extends Fragment {
             daytime = new Time();
 
             String[] resultStrns = new String[numDays];
+
+            //Data is fetched in Celsius by default.
+            //If we use prefers to see in Fahrenheit so that the user can be
+            //change this option with out having to re-fetch the data once
+            //we start storing the values in database.
+
+            SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String unitType = sharedPrefs.getString(getString(R.string.pref_units_key),getString(R.string.pref_units_metric));
+
             for (int i = 0; i < weatherArray.length(); i++) {
                 //For now, using the format "Day,Description, hi/low
                 String day;
@@ -195,7 +225,7 @@ public class ForecastFragment extends Fragment {
                 double high = temperatureObject.getDouble(OWM_MAX);
                 double low = temperatureObject.getDouble(OWM_MIN);
 
-                highAndLow = formatHighLows(high, low);
+                highAndLow = formatHighLows(high,low,unitType);
                 resultStrns[i] = day + "-" + description + "-" + highAndLow;
 
             }
@@ -251,7 +281,6 @@ public class ForecastFragment extends Fragment {
                         .build();
 
                 URL url = new URL(builtUri.toString());
-                Log.v(LOG_TAG, "Built_URL" + builtUri.toString());
                 // Create the request to openWeatherMAp, and open the connection
 
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -284,7 +313,6 @@ public class ForecastFragment extends Fragment {
                 forecastJsonStr = buffer.toString();
 
             } catch (IOException e) {
-                Log.e("PlaceHolderFragment", "Error", e);
                 /*
                 If the code didn't successfully get the openWeatherMap data, no point
                 in attempting to parse it.
@@ -298,7 +326,6 @@ public class ForecastFragment extends Fragment {
                     try {
                         reader.close();
                     } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
                     }
                 }
             }
