@@ -3,4 +3,17 @@
     <string name="action_refresh" translatable="false">Refresh</string>
     <string name="hello_world">Hello World</string>
     <string name="action_settings">Setting</string>
+    <string name="title_detail">DetailList</string>
+    
+    <string name="pref_location_title">Location</string>
+    <string name="pref_location_key" translatable="false">location</string>
+    <string name="pref_location_default" translatable="false">60007</string>
+    
+    <string name="pref_units_general">Temperature Units</string>
+    <string name="pref_units_key">units</string>
+    <string name="pref_units_metric" translatable="false">metric</string>
+    <string name="pref_units_imperial" translatable="false">imperial</string>
+    <string name="pref_units_label_metric">Metric</string>
+    <string name="pref_units_label_imperial">Imperial</string>
+
 </resources>
