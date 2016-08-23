@@ -4,7 +4,9 @@
     <string name="hello_world">Hello World</string>
     <string name="action_settings">Setting</string>
     <string name="title_detail">DetailList</string>
-    
+    <string name="action_map">Map Location</string>
+    <string name="action_share">Share</string>
+
     <string name="pref_location_title">Location</string>
     <string name="pref_location_key" translatable="false">location</string>
     <string name="pref_location_default" translatable="false">60007</string>
