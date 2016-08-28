@@ -23,8 +23,8 @@ public class TestPractice extends AndroidTestCase {
         int d = 10;
 
         assertEquals("X should be equal", a, c);
-        assertEquals("Y should be true",d > a);
-        assertEquals("Z should be false", a ==b );
+        assertTrue("Y should be true",d > a);
+        assertFalse("Z should be false", a==b );
 
         if (b>d){
             fail("Xy should never happen");

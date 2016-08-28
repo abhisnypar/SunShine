@@ -10,6 +10,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.test.AndroidTestCase;
 
+import com.example.abhim.sunshine.Utils.PollingCheck;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -24,11 +26,11 @@ public class TestUtilities extends AndroidTestCase {
     public static void validateCursor(String error, Cursor valueCursor, ContentValues expectedValues){
 
         assertTrue("Empty cursor returned. " +error, valueCursor.moveToFirst());
-        validateCursorRecord(error, valueCursor, expectedValues);
+        validateCurrentRecord(error, valueCursor, expectedValues);
         valueCursor.close();
     }
 
-    private static void validateCursorRecord(String error, Cursor valueCursor, ContentValues expectedValues) {
+    public static void validateCurrentRecord(String error, Cursor valueCursor, ContentValues expectedValues) {
 
         Set<Map.Entry<String,Object>> valueSet = expectedValues.valueSet();
         for (Map.Entry<String,Object> entry: valueSet){
@@ -94,11 +96,12 @@ public class TestUtilities extends AndroidTestCase {
         private boolean mContentChanged;
 
 
-        public static  TestContentObserver getTestContentObserver(){
+        static TestContentObserver getTestContentObserver() {
             HandlerThread ht = new HandlerThread("ContentObserver Thread");
             ht.start();
             return new TestContentObserver(ht);
         }
+
         public TestContentObserver(HandlerThread ht) {
             super(new Handler(ht.getLooper()));
             mHT = ht;
@@ -106,7 +109,7 @@ public class TestUtilities extends AndroidTestCase {
 
         @Override
         public void onChange(boolean selfChange) {
-            onChange(selfChange,null);
+            onChange(selfChange, null);
         }
 
         @Override
@@ -114,16 +117,23 @@ public class TestUtilities extends AndroidTestCase {
             mContentChanged = true;
         }
 
-        public void waitForNotificationOrFail(){
+        public void waitForNotificationOrFail() {
 
-            }
-
-        static  TestContentObserver getTestContentObserver(){
+            // Note: The PollingCheck class is taken from the Android CTS (Compatibility Test Suite).
+            // It's useful to look at the Android CTS source for ideas on how to test your Android
+            // applications.  The reason that PollingCheck works is that, by default, the JUnit
+            // testing framework is not running on the main Android application thread.
+            new PollingCheck(5000) {
+                @Override
+                protected boolean check() {
+                    return mContentChanged;
+                }
+            }.run();
+            mHT.quit();
+        }
+    }
+        static TestContentObserver getTestContentObserver(){
             return TestContentObserver.getTestContentObserver();
         }
-
-
-        }
-
 
 }

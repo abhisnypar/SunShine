@@ -24,40 +24,51 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
 
-        final String SQL_CREATE_WEATHER_TABLE = "CREATE TABLE" + WeatherContract.WeatherEntry.TABLE_NAME + "(" +
+        //Create ta table to hold locations. A location consists of the string supplied in the
+        //Location setting, the city name and the latitude and longitude
+
+        final String SQL_CREATE_LOCATION_TABLE = "CREATE TABLE " + WeatherContract.LocationEntry.TABLE_NAME + " ( " +
+                WeatherContract.LocationEntry._ID + " INTEGER PRIMARY KEY, " +
+                WeatherContract.LocationEntry.LOCATION_SETT + " TEXT NOT UNIQUE NOT NULL, " +
+                WeatherContract.LocationEntry.CITY_NAME + " TEXT NOT NULL, " +
+                WeatherContract.LocationEntry.COLUMN_LAT + " REAL NOT NULL, " +
+                WeatherContract.LocationEntry.COLUMN_LONG + " REAL NOT NULL" + " );";
+
+        final String SQL_CREATE_WEATHER_TABLE = " CREATE TABLE" + WeatherContract.WeatherEntry.TABLE_NAME + "(" +
                 // Why AutoIncrement here, and not above?
                 // Unique keys will be auto-generated in either case.  But for weather
                 // forecasting, it's reasonable to assume the user will want information
                 // for a certain date and all dates *following*, so the forecast data
                 // should be sorted accordingly.
-                WeatherContract.WeatherEntry._ID + "INTEGER PRIMARY KEY AUTOINCREMENT," +
+                WeatherContract.WeatherEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
 
 
                 // ID of the location entry associated with this weather data
-                WeatherContract.WeatherEntry.COLUMN_LOC_KEY + "INTEGER NOT NULL," +
-                WeatherContract.WeatherEntry.COLUMN_DATE + "INTEGER NOT NULL" +
-                WeatherContract.WeatherEntry.COLUMN_SHORT_DESC + "TEXT NOT NULL," +
-                WeatherContract.WeatherEntry.COLUMN_WEATHER_ID + "INTEGER NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_DATE + " INTEGER NOT NULL" +
+                WeatherContract.WeatherEntry.COLUMN_SHORT_DESC + " TEXT NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_WEATHER_ID + " INTEGER NOT NULL," +
 
-                WeatherContract.WeatherEntry.COLUMN_MIN_TEMP + "REAL NOT NULL," +
-                WeatherContract.WeatherEntry.COLUMN_MIN_TEMP + "REAL NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_MIN_TEMP + " REAL NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_MIN_TEMP + " REAL NOT NULL," +
 
-                WeatherContract.WeatherEntry.COLUMN_HUMIDITY + "REAL NOT NULL," +
-                WeatherContract.WeatherEntry.COLUMN_PRESSURE + "REAL NOT NULL," +
-                WeatherContract.WeatherEntry.COLUMN_WIND_SPEED + "REAL NOT NULL," +
-                WeatherContract.WeatherEntry.COLUMN_DEGREES + "REAL NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_HUMIDITY + " REAL NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_PRESSURE + " REAL NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_WIND_SPEED + " REAL NOT NULL," +
+                WeatherContract.WeatherEntry.COLUMN_DEGREES + " REAL NOT NULL," +
 
                 //Set up location column as a foreign key to location tables
 
-                "FOREIGN KEY ( " + WeatherContract.WeatherEntry.COLUMN_LOC_KEY + ") REFERENCES " +
-                WeatherContract.LocationEntry.TABLE_NAME + "( " + WeatherContract.LocationEntry._ID + ")," +
+                " FOREIGN KEY (" + WeatherContract.WeatherEntry.COLUMN_LOC_KEY + ") REFERENCES " +
+                WeatherContract.LocationEntry.TABLE_NAME + " (" + WeatherContract.LocationEntry._ID + "), " +
 
                 //To ensure the application have just one weather entry per day
                 //per location, it's created a UNIQUE constraint with REPLACE strategy
-                "UNIQUE (" + WeatherContract.WeatherEntry.COLUMN_DATE + ", " +
+                " UNIQUE (" + WeatherContract.WeatherEntry.COLUMN_DATE + ", " +
                 WeatherContract.WeatherEntry.COLUMN_LOC_KEY + ") ON CONFLICT REPLACE);";
 
         sqLiteDatabase.execSQL(SQL_CREATE_WEATHER_TABLE);
+        sqLiteDatabase.execSQL(SQL_CREATE_LOCATION_TABLE);
 
     }
 
